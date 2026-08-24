@@ -5,15 +5,10 @@ export class InputManager {
         this.keys = new Set();
 
         this.directionCallbacks = [];
-
         this.attackCallbacks = [];
-
         this.chipCallbacks = [];
 
-        this.createTouchControls();
-
         this.bindKeyboard();
-
     }
 
 
@@ -26,7 +21,6 @@ export class InputManager {
                 const key =
                     event.key.toLowerCase();
 
-
                 this.keys.add(key);
 
 
@@ -35,9 +29,7 @@ export class InputManager {
                     key === "w"
                 ) {
 
-                    this.emitDirection(
-                        "UP"
-                    );
+                    this.emitDirection("UP");
 
                 }
 
@@ -47,9 +39,7 @@ export class InputManager {
                     key === "s"
                 ) {
 
-                    this.emitDirection(
-                        "DOWN"
-                    );
+                    this.emitDirection("DOWN");
 
                 }
 
@@ -59,9 +49,7 @@ export class InputManager {
                     key === "a"
                 ) {
 
-                    this.emitDirection(
-                        "LEFT"
-                    );
+                    this.emitDirection("LEFT");
 
                 }
 
@@ -71,9 +59,7 @@ export class InputManager {
                     key === "d"
                 ) {
 
-                    this.emitDirection(
-                        "RIGHT"
-                    );
+                    this.emitDirection("RIGHT");
 
                 }
 
@@ -168,107 +154,6 @@ export class InputManager {
 
             }
         );
-
-    }
-
-
-    createTouchControls() {
-
-        if (
-            document.getElementById(
-                "realtime-controls"
-            )
-        ) {
-
-            return;
-
-        }
-
-
-        const controls =
-            document.createElement(
-                "div"
-            );
-
-
-        controls.id =
-            "realtime-controls";
-
-
-        controls.innerHTML = `
-
-            <div class="movement-pad">
-
-                <button
-                    class="move-button"
-                    data-direction="UP"
-                >
-                    ▲
-                </button>
-
-                <div class="move-row">
-
-                    <button
-                        class="move-button"
-                        data-direction="LEFT"
-                    >
-                        ◀
-                    </button>
-
-                    <button
-                        class="move-button"
-                        data-direction="DOWN"
-                    >
-                        ▼
-                    </button>
-
-                    <button
-                        class="move-button"
-                        data-direction="RIGHT"
-                    >
-                        ▶
-                    </button>
-
-                </div>
-
-            </div>
-
-        `;
-
-
-        document.body.appendChild(
-            controls
-        );
-
-
-        controls
-            .querySelectorAll(
-                ".move-button"
-            )
-            .forEach(button => {
-
-                const direction =
-                    button.dataset.direction;
-
-
-                const handler =
-                    event => {
-
-                        event.preventDefault();
-
-                        this.emitDirection(
-                            direction
-                        );
-
-                    };
-
-
-                button.addEventListener(
-                    "pointerdown",
-                    handler
-                );
-
-            });
 
     }
 
