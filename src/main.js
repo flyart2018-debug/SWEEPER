@@ -3,37 +3,37 @@ import { InputManager } from "./realtime/InputManager.js";
 
 
 /* =====================================================
-   SWEEPER MAIN CONTROLLER
-   Character Visual Edition
+   SWEEPER
+   MAIN CONTROLLER
+   SPRITE SHEET EDITION
 ===================================================== */
 
 
-const game =
-    new Game();
+/* =====================================================
+   CORE
+===================================================== */
+
+const game = new Game();
+const input = new InputManager();
 
 
-const input =
-    new InputManager();
+/* =====================================================
+   STATE
+===================================================== */
+
+let selectedChipId = null;
+let battleStarted = false;
+let lastUIUpdate = 0;
+let lastPlayerPosition = null;
+let animationTimer = null;
 
 
-let selectedChipId =
-    null;
+/* =====================================================
+   SPRITE SETTINGS
+===================================================== */
 
-
-let battleStarted =
-    false;
-
-
-let lastUIUpdate =
-    0;
-
-
-let lastPlayerPosition =
-    null;
-
-
-let animationTimer =
-    null;
+const SPRITE_FRAMES = 4;
+const SPRITE_FRAME_TIME = 90;
 
 
 /* =====================================================
@@ -44,27 +44,17 @@ const CHARACTER_ASSETS = {
 
     REN: {
 
-        idle:
-            "./ren-idle.png",
-
-        move:
-            "./ren-move.png",
-
-        attack:
-            "./ren-attack.png"
+        idle: "./ren-idle.png",
+        move: "./ren-move.png",
+        attack: "./ren-attack.png"
 
     },
 
     KAI: {
 
-        idle:
-            "./kai-idle.png",
-
-        move:
-            "./kai-move.png",
-
-        attack:
-            "./kai-attack.png"
+        idle: "./kai-idle.png",
+        move: "./kai-move.png",
+        attack: "./kai-attack.png"
 
     }
 
@@ -79,29 +69,15 @@ const CHARACTERS = [
 
     {
 
-        id:
-            "REN",
+        id: "REN",
 
-        name:
-            "レン・クロス",
+        name: "レン・クロス",
 
-        type:
-            "BALANCE",
+        typeJP: "バランス型",
 
-        typeJP:
-            "バランス型",
+        weaponJP: "ブレード",
 
-        weapon:
-            "BLADE",
-
-        weaponJP:
-            "ブレード",
-
-        ability:
-            "OVERDRIVE",
-
-        abilityJP:
-            "オーバードライブ",
+        abilityJP: "オーバードライブ",
 
         description:
             "攻撃・防御・移動を平均的に扱えるオールラウンダー。",
@@ -109,37 +85,22 @@ const CHARACTERS = [
         quote:
             "守るために、強くなる。それだけだ。",
 
-        asset:
-            CHARACTER_ASSETS.REN
+        asset: CHARACTER_ASSETS.REN
 
     },
 
 
     {
 
-        id:
-            "KAI",
+        id: "KAI",
 
-        name:
-            "カイ・ヴェルド",
+        name: "カイ・ヴェルド",
 
-        type:
-            "SPEED",
+        typeJP: "スピード型",
 
-        typeJP:
-            "スピード型",
+        weaponJP: "ナイフ",
 
-        weapon:
-            "KNIFE",
-
-        weaponJP:
-            "ナイフ",
-
-        ability:
-            "STEP",
-
-        abilityJP:
-            "ステップ",
+        abilityJP: "ステップ",
 
         description:
             "高い機動力で攻撃と離脱を繰り返す高速型。",
@@ -147,8 +108,7 @@ const CHARACTERS = [
         quote:
             "俺は止まらない。一歩先、そこにだけ勝ちがある。",
 
-        asset:
-            CHARACTER_ASSETS.KAI
+        asset: CHARACTER_ASSETS.KAI
 
     }
 
@@ -156,15 +116,13 @@ const CHARACTERS = [
 
 
 /* =====================================================
-   SCREEN
+   SCREENS
 ===================================================== */
 
 const screens = {
 
     title:
-        document.getElementById(
-            "title-screen"
-        ),
+        document.getElementById("title-screen"),
 
     characterSelect:
         document.getElementById(
@@ -172,34 +130,24 @@ const screens = {
         ),
 
     battle:
-        document.getElementById(
-            "battle-screen"
-        ),
+        document.getElementById("battle-screen"),
 
     result:
-        document.getElementById(
-            "result-screen"
-        )
+        document.getElementById("result-screen")
 
 };
 
 
 /* =====================================================
-   SCREEN CHANGE
+   SCREEN
 ===================================================== */
 
-function showScreen(
-    name
-) {
+function showScreen(name) {
 
-    Object.values(
-        screens
-    ).forEach(
+    Object.values(screens).forEach(
         screen => {
 
-            if (
-                screen
-            ) {
+            if (screen) {
 
                 screen.classList.remove(
                     "active"
@@ -211,9 +159,7 @@ function showScreen(
     );
 
 
-    if (
-        screens[name]
-    ) {
+    if (screens[name]) {
 
         screens[name].classList.add(
             "active"
@@ -225,26 +171,18 @@ function showScreen(
 
 
 /* =====================================================
-   TEXT HELPER
+   TEXT
 ===================================================== */
 
-function setText(
-    id,
-    value
-) {
+function setText(id, value) {
 
     const element =
-        document.getElementById(
-            id
-        );
+        document.getElementById(id);
 
 
-    if (
-        element
-    ) {
+    if (element) {
 
-        element.textContent =
-            value;
+        element.textContent = value;
 
     }
 
@@ -255,15 +193,12 @@ function setText(
    MESSAGE
 ===================================================== */
 
-function setMessage(
-    message
-) {
+function setMessage(message) {
 
     setText(
         "action-message",
         message
     );
-
 
     setText(
         "battle-log",
@@ -274,34 +209,38 @@ function setMessage(
 
 
 /* =====================================================
-   CHARACTER IMAGE
+   SPRITE VISUAL
 ===================================================== */
 
-function createCharacterImage(
+function createSprite(
     character,
     state = "idle"
 ) {
 
-    const image =
-        document.createElement(
-            "img"
-        );
+    const sprite =
+        document.createElement("div");
 
 
-    image.className =
+    sprite.className =
         "character-visual";
 
 
-    image.alt =
-        character.name;
+    sprite.dataset.character =
+        character.id;
 
 
-    image.draggable =
-        false;
+    sprite.dataset.state =
+        state;
 
 
-    image.loading =
-        "eager";
+    sprite.dataset.frame =
+        "0";
+
+
+    sprite.setAttribute(
+        "aria-label",
+        character.name
+    );
 
 
     const asset =
@@ -312,62 +251,252 @@ function createCharacterImage(
         character.asset.idle;
 
 
-    image.src =
-        asset;
-
-
-    image.style.width =
+    sprite.style.width =
         "100%";
 
 
-    image.style.height =
+    sprite.style.height =
         "100%";
 
 
-    image.style.objectFit =
-        "contain";
+    sprite.style.backgroundImage =
+        `url("${asset}")`;
 
 
-    image.style.objectPosition =
-        "center";
+    sprite.style.backgroundRepeat =
+        "no-repeat";
 
 
-    image.style.display =
+    sprite.style.backgroundSize =
+        `${SPRITE_FRAMES * 100}% 100%`;
+
+
+    sprite.style.backgroundPosition =
+        "0% 50%";
+
+
+    sprite.style.backgroundColor =
+        "transparent";
+
+
+    sprite.style.display =
         "block";
 
 
-    image.style.pointerEvents =
+    sprite.style.pointerEvents =
         "none";
 
 
-    image.style.userSelect =
+    sprite.style.userSelect =
         "none";
 
 
-    image.onerror =
+    sprite.style.webkitUserSelect =
+        "none";
+
+
+    /*
+     * 画像が存在しない場合
+     * CSS背景は壊れた画像アイコンを出さない。
+     * カイ素材追加前でも画面を壊さない。
+     */
+
+    const tester =
+        new Image();
+
+
+    tester.onload =
         () => {
 
-            if (
-                image.src.endsWith(
-                    fallback
-                )
-            ) {
-
-                image.style.display =
-                    "none";
-
-                return;
-
-            }
-
-
-            image.src =
-                fallback;
+            sprite.style.backgroundImage =
+                `url("${asset}")`;
 
         };
 
 
-    return image;
+    tester.onerror =
+        () => {
+
+            if (asset !== fallback) {
+
+                sprite.style.backgroundImage =
+                    `url("${fallback}")`;
+
+            }
+
+        };
+
+
+    tester.src =
+        asset;
+
+
+    return sprite;
+
+}
+
+
+/* =====================================================
+   SPRITE FRAME
+===================================================== */
+
+function setSpriteFrame(
+    sprite,
+    frame
+) {
+
+    if (!sprite) {
+
+        return;
+
+    }
+
+
+    const safeFrame =
+        Math.max(
+            0,
+            Math.min(
+                SPRITE_FRAMES - 1,
+                frame
+            )
+        );
+
+
+    const percent =
+        SPRITE_FRAMES === 1
+            ? 0
+            : safeFrame /
+              (SPRITE_FRAMES - 1) *
+              100;
+
+
+    sprite.dataset.frame =
+        String(safeFrame);
+
+
+    sprite.style.backgroundPosition =
+        `${percent}% 50%`;
+
+}
+
+
+/* =====================================================
+   SPRITE ANIMATION
+===================================================== */
+
+function animateSprite(
+    sprite,
+    state,
+    duration = 360
+) {
+
+    if (!sprite) {
+
+        return;
+
+    }
+
+
+    clearInterval(
+        animationTimer
+    );
+
+
+    sprite.dataset.state =
+        state;
+
+
+    const characterId =
+        sprite.dataset.character;
+
+
+    const character =
+        CHARACTERS.find(
+            item =>
+                item.id ===
+                characterId
+        );
+
+
+    if (!character) {
+
+        return;
+
+    }
+
+
+    const asset =
+        character.asset[state] ||
+        character.asset.idle;
+
+
+    sprite.style.backgroundImage =
+        `url("${asset}")`;
+
+
+    let frame = 0;
+
+
+    setSpriteFrame(
+        sprite,
+        frame
+    );
+
+
+    animationTimer =
+        setInterval(
+            () => {
+
+                frame++;
+
+                if (
+                    frame >=
+                    SPRITE_FRAMES
+                ) {
+
+                    frame = 0;
+
+                }
+
+
+                setSpriteFrame(
+                    sprite,
+                    frame
+                );
+
+            },
+            SPRITE_FRAME_TIME
+        );
+
+
+    setTimeout(
+        () => {
+
+            clearInterval(
+                animationTimer
+            );
+
+
+            const idle =
+                character.asset.idle;
+
+
+            sprite.dataset.state =
+                "idle";
+
+
+            sprite.style.backgroundImage =
+                `url("${idle}")`;
+
+
+            setSpriteFrame(
+                sprite,
+                0
+            );
+
+        },
+        duration
+    );
 
 }
 
@@ -384,9 +513,7 @@ function renderCharacterSelect() {
         );
 
 
-    if (
-        !list
-    ) {
+    if (!list) {
 
         return;
 
@@ -407,8 +534,14 @@ function renderCharacterSelect() {
 
 
             card.className =
-                `character-card ${character.id.toLowerCase()}`;
+                `character-card ${
+                    character.id.toLowerCase()
+                }`;
 
+
+            /* -----------------------------------------
+               VISUAL
+            ----------------------------------------- */
 
             const visual =
                 document.createElement(
@@ -420,17 +553,53 @@ function renderCharacterSelect() {
                 "character-select-visual";
 
 
-            const image =
-                createCharacterImage(
+            visual.style.width =
+                "100%";
+
+
+            visual.style.height =
+                "180px";
+
+
+            visual.style.display =
+                "flex";
+
+
+            visual.style.alignItems =
+                "center";
+
+
+            visual.style.justifyContent =
+                "center";
+
+
+            visual.style.overflow =
+                "hidden";
+
+
+            const sprite =
+                createSprite(
                     character,
                     "idle"
                 );
 
 
+            sprite.style.width =
+                "70%";
+
+
+            sprite.style.height =
+                "100%";
+
+
             visual.appendChild(
-                image
+                sprite
             );
 
+
+            /* -----------------------------------------
+               CONTENT
+            ----------------------------------------- */
 
             const content =
                 document.createElement(
@@ -442,36 +611,107 @@ function renderCharacterSelect() {
                 "character-card-content";
 
 
-            content.innerHTML = `
+            const name =
+                document.createElement(
+                    "h3"
+                );
 
-                <h3 class="character-name">
-                    ${character.name}
-                </h3>
 
-                <div class="character-type">
-                    ${character.typeJP}
-                </div>
+            name.className =
+                "character-name";
 
-                <p class="character-description">
-                    ${character.description}
-                </p>
 
-                <p class="character-description">
-                    WEAPON：
-                    ${character.weaponJP}
+            name.textContent =
+                character.name;
+
+
+            const type =
+                document.createElement(
+                    "div"
+                );
+
+
+            type.className =
+                "character-type";
+
+
+            type.textContent =
+                character.typeJP;
+
+
+            const description =
+                document.createElement(
+                    "p"
+                );
+
+
+            description.className =
+                "character-description";
+
+
+            description.textContent =
+                character.description;
+
+
+            const details =
+                document.createElement(
+                    "p"
+                );
+
+
+            details.className =
+                "character-description";
+
+
+            details.innerHTML =
+                `
+                    WEAPON：${character.weaponJP}
                     <br>
-                    ABILITY：
-                    ${character.abilityJP}
-                </p>
+                    ABILITY：${character.abilityJP}
+                `;
 
-                <button
-                    type="button"
-                    class="character-select-button"
-                >
-                    SELECT
-                </button>
 
-            `;
+            const button =
+                document.createElement(
+                    "button"
+                );
+
+
+            button.type =
+                "button";
+
+
+            button.className =
+                "character-select-button";
+
+
+            button.textContent =
+                "SELECT";
+
+
+            content.appendChild(
+                name
+            );
+
+
+            content.appendChild(
+                type
+            );
+
+
+            content.appendChild(
+                description
+            );
+
+
+            content.appendChild(
+                details
+            );
+
+
+            content.appendChild(
+                button
+            );
 
 
             card.appendChild(
@@ -500,6 +740,52 @@ function renderCharacterSelect() {
                 card
             );
 
+
+            /*
+             * キャラ選択画面でも
+             * 待機アニメーション
+             */
+
+            let frame = 0;
+
+
+            setInterval(
+                () => {
+
+                    const current =
+                        visual.querySelector(
+                            ".character-visual"
+                        );
+
+
+                    if (!current) {
+
+                        return;
+
+                    }
+
+
+                    frame++;
+
+                    if (
+                        frame >=
+                        SPRITE_FRAMES
+                    ) {
+
+                        frame = 0;
+
+                    }
+
+
+                    setSpriteFrame(
+                        current,
+                        frame
+                    );
+
+                },
+                SPRITE_FRAME_TIME
+            );
+
         }
     );
 
@@ -521,17 +807,17 @@ function startBattle(
         );
 
     }
-    catch (
-        error
-    ) {
+    catch (error) {
 
         console.error(
             error
         );
 
+
         setMessage(
             "BATTLE INITIALIZATION ERROR"
         );
+
 
         return;
 
@@ -571,54 +857,48 @@ function startBattle(
 
 
 /* =====================================================
-   OLD CONTROLS
+   OLD UI
 ===================================================== */
 
 function hideOldControls() {
 
-    const attackButton =
+    const attack =
         document.getElementById(
             "attack-button"
         );
 
 
-    const endTurnButton =
+    const endTurn =
         document.getElementById(
             "end-turn-button"
         );
 
 
-    const realtimeControls =
+    const realtime =
         document.getElementById(
             "realtime-controls"
         );
 
 
-    if (
-        attackButton
-    ) {
+    if (attack) {
 
-        attackButton.style.display =
+        attack.style.display =
             "none";
 
     }
 
 
-    if (
-        endTurnButton
-    ) {
+    if (endTurn) {
 
-        endTurnButton.style.display =
+        endTurn.style.display =
             "none";
 
     }
 
 
-    if (
-        realtimeControls
-    ) {
+    if (realtime) {
 
-        realtimeControls.remove();
+        realtime.remove();
 
     }
 
@@ -626,7 +906,7 @@ function hideOldControls() {
 
 
 /* =====================================================
-   RENDER BATTLE FIELD
+   BATTLE FIELD
 ===================================================== */
 
 function renderBattleField() {
@@ -637,9 +917,7 @@ function renderBattleField() {
         );
 
 
-    if (
-        !field
-    ) {
+    if (!field) {
 
         return;
 
@@ -660,18 +938,14 @@ function renderBattleField() {
         "";
 
 
-    field.style.touchAction =
-        "manipulation";
-
-
     const state =
         game.state;
 
 
-    const selectedCharacter =
+    const character =
         CHARACTERS.find(
-            character =>
-                character.id ===
+            item =>
+                item.id ===
                 state.player.id
         ) ||
         CHARACTERS[0];
@@ -699,10 +973,6 @@ function renderBattleField() {
                 "battle-cell";
 
 
-            cell.style.touchAction =
-                "manipulation";
-
-
             cell.dataset.row =
                 row;
 
@@ -711,9 +981,11 @@ function renderBattleField() {
                 col;
 
 
-            if (
-                row >= 3
-            ) {
+            cell.style.touchAction =
+                "manipulation";
+
+
+            if (row >= 3) {
 
                 cell.classList.add(
                     "player-zone"
@@ -729,9 +1001,7 @@ function renderBattleField() {
             }
 
 
-            if (
-                row === 2
-            ) {
+            if (row === 2) {
 
                 cell.classList.add(
                     "center-line"
@@ -740,92 +1010,94 @@ function renderBattleField() {
             }
 
 
-            const isPlayerCell =
+            const isPlayer =
+                state.playerPosition &&
                 state.playerPosition.row ===
                     row &&
                 state.playerPosition.col ===
                     col;
 
 
-            const isEnemyCell =
+            const isEnemy =
+                state.enemyPosition &&
                 state.enemyPosition.row ===
                     row &&
                 state.enemyPosition.col ===
                     col;
 
 
-            /* =========================================
+            /* -----------------------------------------
                PLAYER
-            ========================================= */
+            ----------------------------------------- */
 
-            if (
-                isPlayerCell
-            ) {
+            if (isPlayer) {
 
-                const player =
+                const unit =
                     document.createElement(
                         "div"
                     );
 
 
-                player.className =
+                unit.className =
                     "unit player";
 
 
-                player.dataset.character =
-                    selectedCharacter.id;
+                unit.dataset.character =
+                    character.id;
 
 
-                player.dataset.state =
-                    "idle";
-
-
-                player.style.background =
+                unit.style.background =
                     "transparent";
 
 
-                player.style.overflow =
-                    "hidden";
+                unit.style.border =
+                    "none";
 
 
-                player.style.padding =
+                unit.style.boxShadow =
+                    "none";
+
+
+                unit.style.padding =
                     "0";
 
 
-                player.style.border =
-                    "none";
+                unit.style.overflow =
+                    "hidden";
 
 
-                player.style.boxShadow =
-                    "none";
-
-
-                const image =
-                    createCharacterImage(
-                        selectedCharacter,
+                const sprite =
+                    createSprite(
+                        character,
                         "idle"
                     );
 
 
-                player.appendChild(
-                    image
+                sprite.style.width =
+                    "100%";
+
+
+                sprite.style.height =
+                    "100%";
+
+
+                unit.appendChild(
+                    sprite
                 );
 
 
                 cell.appendChild(
-                    player
+                    unit
                 );
 
             }
 
 
-            /* =========================================
+            /* -----------------------------------------
                ENEMY
-            ========================================= */
+            ----------------------------------------- */
 
-            if (
-                isEnemyCell
-            ) {
+            if (isEnemy) {
 
                 const enemy =
                     document.createElement(
@@ -848,9 +1120,9 @@ function renderBattleField() {
             }
 
 
-            /* =========================================
-               TOUCH
-            ========================================= */
+            /* -----------------------------------------
+               CELL INPUT
+            ----------------------------------------- */
 
             cell.addEventListener(
                 "pointerup",
@@ -878,16 +1150,12 @@ function renderBattleField() {
                     handleBattleCell(
                         row,
                         col,
-                        isEnemyCell
+                        isEnemy
                     );
 
                 }
             );
 
-
-            /* =========================================
-               MOUSE
-            ========================================= */
 
             cell.addEventListener(
                 "click",
@@ -905,7 +1173,7 @@ function renderBattleField() {
                     handleBattleCell(
                         row,
                         col,
-                        isEnemyCell
+                        isEnemy
                     );
 
                 }
@@ -924,22 +1192,18 @@ function renderBattleField() {
 
 
 /* =====================================================
-   BATTLE CELL ACTION
+   CELL ACTION
 ===================================================== */
 
 function handleBattleCell(
     row,
     col,
-    isEnemyCell
+    isEnemy
 ) {
 
-    if (
-        isEnemyCell
-    ) {
+    if (isEnemy) {
 
-        if (
-            selectedChipId
-        ) {
+        if (selectedChipId) {
 
             useChip(
                 selectedChipId
@@ -951,6 +1215,7 @@ function handleBattleCell(
             attack();
 
         }
+
 
         return;
 
@@ -971,7 +1236,7 @@ function handleBattleCell(
 
         playCharacterAnimation(
             "move",
-            280
+            300
         );
 
     }
@@ -985,7 +1250,38 @@ function handleBattleCell(
 
 
 /* =====================================================
-   CHIP UI
+   BATTLE ANIMATION
+===================================================== */
+
+function playCharacterAnimation(
+    state,
+    duration
+) {
+
+    const sprite =
+        document.querySelector(
+            "#battle-field .unit.player .character-visual"
+        );
+
+
+    if (!sprite) {
+
+        return;
+
+    }
+
+
+    animateSprite(
+        sprite,
+        state,
+        duration
+    );
+
+}
+
+
+/* =====================================================
+   CHIPS
 ===================================================== */
 
 function renderChips() {
@@ -996,9 +1292,7 @@ function renderChips() {
         );
 
 
-    if (
-        !container
-    ) {
+    if (!container) {
 
         return;
 
@@ -1009,102 +1303,105 @@ function renderChips() {
         "";
 
 
-    game.getAllChips()
-        .forEach(
-            chip => {
-
-                if (
-                    !chip
-                ) {
-
-                    return;
-
-                }
+    const chips =
+        game.getAllChips();
 
 
-                const button =
-                    document.createElement(
-                        "button"
-                    );
+    if (!Array.isArray(chips)) {
+
+        return;
+
+    }
 
 
-                button.type =
-                    "button";
+    chips.forEach(
+        chip => {
 
-
-                button.className =
-                    "chip-button";
-
-
-                if (
-                    selectedChipId ===
-                    chip.id
-                ) {
-
-                    button.classList.add(
-                        "selected"
-                    );
-
-                }
-
-
-                button.innerHTML = `
-
-                    <span class="chip-name">
-                        ${chip.name}
-                    </span>
-
-                    <span class="chip-description">
-                        ${chip.description}
-                    </span>
-
-                `;
-
-
-                button.addEventListener(
-                    "click",
-                    event => {
-
-                        event.stopPropagation();
-
-
-                        if (
-                            selectedChipId ===
-                            chip.id
-                        ) {
-
-                            selectedChipId =
-                                null;
-
-                            setMessage(
-                                "CHIP SELECTION CLEARED"
-                            );
-
-                        }
-                        else {
-
-                            selectedChipId =
-                                chip.id;
-
-                            setMessage(
-                                `${chip.name} SELECTED // TAP CPU`
-                            );
-
-                        }
-
-
-                        renderChips();
-
-                    }
+            const button =
+                document.createElement(
+                    "button"
                 );
 
 
-                container.appendChild(
-                    button
+            button.type =
+                "button";
+
+
+            button.className =
+                "chip-button";
+
+
+            if (
+                selectedChipId ===
+                chip.id
+            ) {
+
+                button.classList.add(
+                    "selected"
                 );
 
             }
-        );
+
+
+            button.innerHTML = `
+
+                <span class="chip-name">
+                    ${chip.name}
+                </span>
+
+                <span class="chip-description">
+                    ${chip.description}
+                </span>
+
+            `;
+
+
+            button.addEventListener(
+                "click",
+                event => {
+
+                    event.stopPropagation();
+
+
+                    if (
+                        selectedChipId ===
+                        chip.id
+                    ) {
+
+                        selectedChipId =
+                            null;
+
+
+                        setMessage(
+                            "CHIP SELECTION CLEARED"
+                        );
+
+                    }
+                    else {
+
+                        selectedChipId =
+                            chip.id;
+
+
+                        setMessage(
+                            `${chip.name} SELECTED // TAP CPU`
+                        );
+
+                    }
+
+
+                    renderChips();
+
+                }
+            );
+
+
+            container.appendChild(
+                button
+            );
+
+        }
+    );
 
 }
 
@@ -1117,9 +1414,7 @@ function useChip(
     chipId
 ) {
 
-    if (
-        !battleStarted
-    ) {
+    if (!battleStarted) {
 
         return;
 
@@ -1142,6 +1437,7 @@ function useChip(
             "CHIP UNAVAILABLE"
         );
 
+
         return;
 
     }
@@ -1151,13 +1447,11 @@ function useChip(
         null;
 
 
-    if (
-        result.hit
-    ) {
+    if (result.hit) {
 
         playCharacterAnimation(
             "attack",
-            420
+            450
         );
 
 
@@ -1178,7 +1472,7 @@ function useChip(
     else {
 
         setMessage(
-            `CHIP USED // ${chipId}`
+            "CHIP USED"
         );
 
     }
@@ -1195,14 +1489,12 @@ function useChip(
 
 
 /* =====================================================
-   NORMAL ATTACK
+   ATTACK
 ===================================================== */
 
 function attack() {
 
-    if (
-        !battleStarted
-    ) {
+    if (!battleStarted) {
 
         return;
 
@@ -1223,6 +1515,7 @@ function attack() {
             "ATTACK UNAVAILABLE"
         );
 
+
         return;
 
     }
@@ -1230,13 +1523,11 @@ function attack() {
 
     playCharacterAnimation(
         "attack",
-        420
+        450
     );
 
 
-    if (
-        result.hit
-    ) {
+    if (result.hit) {
 
         setMessage(
             `HIT // -${result.damage}`
@@ -1286,141 +1577,6 @@ function checkGameOver() {
 
 
 /* =====================================================
-   CHARACTER ANIMATION
-===================================================== */
-
-function playCharacterAnimation(
-    state,
-    duration = 350
-) {
-
-    const player =
-        document.querySelector(
-            "#battle-field .unit.player"
-        );
-
-
-    if (
-        !player
-    ) {
-
-        return;
-
-    }
-
-
-    const characterId =
-        player.dataset.character ||
-        "REN";
-
-
-    const character =
-        CHARACTERS.find(
-            item =>
-                item.id ===
-                characterId
-        ) ||
-        CHARACTERS[0];
-
-
-    const image =
-        player.querySelector(
-            ".character-visual"
-        );
-
-
-    if (
-        !image
-    ) {
-
-        return;
-
-    }
-
-
-    clearTimeout(
-        animationTimer
-    );
-
-
-    image.src =
-        character.asset[state] ||
-        character.asset.idle;
-
-
-    player.dataset.state =
-        state;
-
-
-    animationTimer =
-        setTimeout(
-            () => {
-
-                image.src =
-                    character.asset.idle;
-
-                player.dataset.state =
-                    "idle";
-
-            },
-            duration
-        );
-
-}
-
-
-/* =====================================================
-   KEYBOARD / REALTIME INPUT
-===================================================== */
-
-input.onDirection(
-    direction => {
-
-        if (
-            !battleStarted
-        ) {
-
-            return;
-
-        }
-
-
-        const moved =
-            game.realtime.movePlayer(
-                direction
-            );
-
-
-        if (
-            moved
-        ) {
-
-            playCharacterAnimation(
-                "move",
-                280
-            );
-
-        }
-
-
-        updateBattleUI(
-            true
-        );
-
-    }
-);
-
-
-input.onAttack(
-    () => {
-
-        attack();
-
-    }
-);
-
-
-/* =====================================================
    BATTLE UI
 ===================================================== */
 
@@ -1435,7 +1591,7 @@ function updateBattleUI(
     if (
         !force &&
         now - lastUIUpdate <
-            45
+            50
     ) {
 
         return;
@@ -1471,13 +1627,17 @@ function updateBattleUI(
 
     setText(
         "player-name",
-        player.shortName
+        player.shortName ||
+        player.name ||
+        "REN"
     );
 
 
     setText(
         "enemy-name",
-        enemy.shortName
+        enemy.shortName ||
+        enemy.name ||
+        "CPU"
     );
 
 
@@ -1505,9 +1665,7 @@ function updateBattleUI(
         );
 
 
-    if (
-        playerBar
-    ) {
+    if (playerBar) {
 
         playerBar.style.width =
             `${Math.max(
@@ -1520,9 +1678,7 @@ function updateBattleUI(
     }
 
 
-    if (
-        enemyBar
-    ) {
+    if (enemyBar) {
 
         enemyBar.style.width =
             `${Math.max(
@@ -1534,6 +1690,10 @@ function updateBattleUI(
 
     }
 
+
+    /*
+     * TURN表示はリアルタイム版では非表示
+     */
 
     setText(
         "turn-number",
@@ -1556,7 +1716,7 @@ function updateBattleUI(
 
         playCharacterAnimation(
             "move",
-            280
+            300
         );
 
     }
@@ -1572,16 +1732,7 @@ function updateBattleUI(
     renderChips();
 
 
-    if (
-        state.gameOver
-    ) {
-
-        showResult(
-            state.winner ===
-            "PLAYER"
-        );
-
-    }
+    checkGameOver();
 
 }
 
@@ -1614,9 +1765,7 @@ function showResult(
         );
 
 
-    if (
-        title
-    ) {
+    if (title) {
 
         title.textContent =
             playerWon
@@ -1626,9 +1775,7 @@ function showResult(
     }
 
 
-    if (
-        message
-    ) {
+    if (message) {
 
         message.textContent =
             playerWon
@@ -1646,7 +1793,54 @@ function showResult(
 
 
 /* =====================================================
-   TITLE BUTTONS
+   INPUT
+===================================================== */
+
+input.onDirection(
+    direction => {
+
+        if (!battleStarted) {
+
+            return;
+
+        }
+
+
+        const moved =
+            game.realtime.movePlayer(
+                direction
+            );
+
+
+        if (moved) {
+
+            playCharacterAnimation(
+                "move",
+                300
+            );
+
+        }
+
+
+        updateBattleUI(
+            true
+        );
+
+    }
+);
+
+
+input.onAttack(
+    () => {
+
+        attack();
+
+    }
+);
+
+
+/* =====================================================
+   TITLE
 ===================================================== */
 
 const startButton =
@@ -1655,9 +1849,7 @@ const startButton =
     );
 
 
-if (
-    startButton
-) {
+if (startButton) {
 
     startButton.addEventListener(
         "click",
@@ -1676,7 +1868,7 @@ if (
 
 
 /* =====================================================
-   BACK TO TITLE
+   BACK
 ===================================================== */
 
 const backButton =
@@ -1685,9 +1877,7 @@ const backButton =
     );
 
 
-if (
-    backButton
-) {
+if (backButton) {
 
     backButton.addEventListener(
         "click",
@@ -1696,7 +1886,16 @@ if (
             battleStarted =
                 false;
 
-            game.realtime.stop();
+
+            if (
+                game.realtime &&
+                game.realtime.stop
+            ) {
+
+                game.realtime.stop();
+
+            }
+
 
             showScreen(
                 "title"
@@ -1718,9 +1917,7 @@ const restartButton =
     );
 
 
-if (
-    restartButton
-) {
+if (restartButton) {
 
     restartButton.addEventListener(
         "click",
@@ -1748,9 +1945,7 @@ const resultTitleButton =
     );
 
 
-if (
-    resultTitleButton
-) {
+if (resultTitleButton) {
 
     resultTitleButton.addEventListener(
         "click",
@@ -1759,7 +1954,16 @@ if (
             battleStarted =
                 false;
 
-            game.realtime.stop();
+
+            if (
+                game.realtime &&
+                game.realtime.stop
+            ) {
+
+                game.realtime.stop();
+
+            }
+
 
             showScreen(
                 "title"
@@ -1772,14 +1976,12 @@ if (
 
 
 /* =====================================================
-   REALTIME UI LOOP
+   REALTIME LOOP
 ===================================================== */
 
 function realtimeLoop() {
 
-    if (
-        battleStarted
-    ) {
+    if (battleStarted) {
 
         updateBattleUI();
 
