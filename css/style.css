@@ -1117,3 +1117,155 @@ button {
     }
 
 }
+
+/* =====================================================
+   SWEEPER REALTIME MOBILE CONTROL
+===================================================== */
+
+
+/*
+ * 旧方向パッド完全削除
+ */
+
+#realtime-controls {
+    display: none !important;
+}
+
+
+/*
+ * 旧ATTACKボタン削除
+ */
+
+#attack-button {
+    display: none !important;
+}
+
+
+/*
+ * END TURN削除
+ */
+
+#end-turn-button {
+    display: none !important;
+}
+
+
+/*
+ * ターン終了系ボタンが
+ * 別のクラス名だった場合にも対応
+ */
+
+.end-turn-button,
+#end-turn,
+[data-action="end-turn"] {
+    display: none !important;
+}
+
+
+/*
+ * フィールドはタップ操作専用
+ */
+
+#battle-field {
+
+    touch-action: manipulation;
+
+    user-select: none;
+
+    -webkit-user-select: none;
+
+    -webkit-touch-callout: none;
+
+}
+
+
+/*
+ * グリッド
+ */
+
+.battle-cell {
+
+    touch-action: manipulation;
+
+    user-select: none;
+
+    -webkit-user-select: none;
+
+}
+
+
+/*
+ * キャラクターもタップを
+ * 親セルに渡す
+ */
+
+.battle-cell .unit {
+
+    pointer-events: none;
+
+}
+
+
+/*
+ * 選択中チップ
+ */
+
+.chip-button.selected {
+
+    transform: translateY(-2px) scale(1.02);
+
+    filter: brightness(1.35);
+
+}
+
+/*
+ * チップボタンのタップ感
+ */
+
+.chip-button {
+
+    touch-action: manipulation;
+
+    -webkit-tap-highlight-color: transparent;
+
+}
+
+
+/*
+ * iPhoneで長押しメニューを防止
+ */
+
+#battle-screen {
+
+    user-select: none;
+
+    -webkit-user-select: none;
+
+    -webkit-touch-callout: none;
+
+}
+
+
+/*
+ * リアルタイム戦闘では
+ * ターン番号を表示しない
+ */
+
+#turn-number {
+
+    display: none !important;
+
+}
+
+
+/*
+ * END TURNという文字を持つ
+ * 旧UIが残った場合の保険
+ */
+
+.turn-controls,
+.battle-turn-controls {
+
+    display: none !important;
+
+}
