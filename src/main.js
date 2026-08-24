@@ -221,12 +221,64 @@ function startBattle(
     );
 
 
+    hideOldControls();
+
+
     updateBattleUI();
 
 
     setMessage(
         "REALTIME BATTLE // ONLINE"
     );
+
+}
+
+
+/* =====================================================
+   REMOVE OLD CONTROLS
+===================================================== */
+
+function hideOldControls() {
+
+    const attackButton =
+        document.getElementById(
+            "attack-button"
+        );
+
+
+    const endTurnButton =
+        document.getElementById(
+            "end-turn-button"
+        );
+
+
+    if (attackButton) {
+
+        attackButton.style.display =
+            "none";
+
+    }
+
+
+    if (endTurnButton) {
+
+        endTurnButton.style.display =
+            "none";
+
+    }
+
+
+    const realtimeControls =
+        document.getElementById(
+            "realtime-controls"
+        );
+
+
+    if (realtimeControls) {
+
+        realtimeControls.remove();
+
+    }
 
 }
 
@@ -253,6 +305,10 @@ function renderBattleField() {
     field.innerHTML = "";
 
 
+    field.style.touchAction =
+        "manipulation";
+
+
     const state =
         game.state;
 
@@ -277,6 +333,10 @@ function renderBattleField() {
 
             cell.className =
                 "battle-cell";
+
+
+            cell.style.touchAction =
+                "manipulation";
 
 
             if (
@@ -308,13 +368,22 @@ function renderBattleField() {
             }
 
 
-            /*
-             * PLAYER
-             */
+            const isPlayerCell =
+                state.playerPosition.row === row &&
+                state.playerPosition.col === col;
+
+
+            const isEnemyCell =
+                state.enemyPosition.row === row &&
+                state.enemyPosition.col === col;
+
+
+            /* =================================================
+               PLAYER
+            ================================================= */
 
             if (
-                state.playerPosition.row === row &&
-                state.playerPosition.col === col
+                isPlayerCell
             ) {
 
                 const player =
@@ -338,13 +407,12 @@ function renderBattleField() {
             }
 
 
-            /*
-             * ENEMY
-             */
+            /* =================================================
+               ENEMY
+            ================================================= */
 
             if (
-                state.enemyPosition.row === row &&
-                state.enemyPosition.col === col
+                isEnemyCell
             ) {
 
                 const enemy =
@@ -368,9 +436,87 @@ function renderBattleField() {
             }
 
 
-            /*
-             * タップ移動
-             */
+            /* =================================================
+               TOUCH
+               
+               通常マス
+               → 移動
+
+               敵
+               → チップ選択中ならチップ使用
+               → 未選択なら通常攻撃
+            ================================================= */
+
+            cell.addEventListener(
+                "pointerup",
+                event => {
+
+                    if (
+                        !battleStarted
+                    ) {
+
+                        return;
+
+                    }
+
+
+                    if (
+                        event.pointerType ===
+                        "mouse"
+                    ) {
+
+                        return;
+
+                    }
+
+
+                    /*
+                     * 敵をタップ
+                     */
+
+                    if (
+                        isEnemyCell
+                    ) {
+
+                        if (
+                            selectedChipId
+                        ) {
+
+                            useChip(
+                                selectedChipId
+                            );
+
+                        }
+                        else {
+
+                            attack();
+
+                        }
+
+                        return;
+
+                    }
+
+
+                    /*
+                     * 通常マスをタップ
+                     */
+
+                    game.movePlayer(
+                        row,
+                        col
+                    );
+
+
+                    updateBattleUI();
+
+                }
+            );
+
+
+            /* =================================================
+               PC / マウス
+            ================================================= */
 
             cell.addEventListener(
                 "click",
@@ -385,10 +531,35 @@ function renderBattleField() {
                     }
 
 
+                    if (
+                        isEnemyCell
+                    ) {
+
+                        if (
+                            selectedChipId
+                        ) {
+
+                            useChip(
+                                selectedChipId
+                            );
+
+                        }
+                        else {
+
+                            attack();
+
+                        }
+
+                        return;
+
+                    }
+
+
                     game.movePlayer(
                         row,
                         col
                     );
+
 
                     updateBattleUI();
 
@@ -478,13 +649,61 @@ function renderChips() {
             `;
 
 
+            /*
+             * チップをタップしても
+             * その場では発動しない。
+             *
+             * 選択状態にするだけ。
+             */
+
             button.addEventListener(
                 "click",
-                () => {
+                event => {
 
-                    useChip(
+                    event.stopPropagation();
+
+
+                    if (
+                        selectedChipId ===
                         chip.id
-                    );
+                    ) {
+
+                        /*
+                         * 同じチップをもう一度
+                         * タップしたら選択解除。
+                         */
+
+                        selectedChipId =
+                            null;
+
+                    }
+                    else {
+
+                        selectedChipId =
+                            chip.id;
+
+                    }
+
+
+                    updateBattleUI();
+
+
+                    if (
+                        selectedChipId
+                    ) {
+
+                        setMessage(
+                            `${chip.name} SELECTED // TAP CPU`
+                        );
+
+                    }
+                    else {
+
+                        setMessage(
+                            "CHIP SELECTION CLEARED"
+                        );
+
+                    }
 
                 }
             );
@@ -500,7 +719,7 @@ function renderChips() {
 
 
 /* =====================================================
-   CHIP
+   CHIP USE
 ===================================================== */
 
 function useChip(
@@ -537,7 +756,7 @@ function useChip(
 
 
     selectedChipId =
-        chipId;
+        null;
 
 
     if (
@@ -549,10 +768,19 @@ function useChip(
         );
 
     }
+    else if (
+        result.recovered
+    ) {
+
+        setMessage(
+            `RECOVER // +${result.recovered}`
+        );
+
+    }
     else {
 
         setMessage(
-            `CHIP // ${chipId}`
+            `CHIP USED // ${chipId}`
         );
 
     }
@@ -560,11 +788,23 @@ function useChip(
 
     updateBattleUI();
 
+
+    if (
+        game.state.gameOver
+    ) {
+
+        showResult(
+            game.state.winner ===
+            "PLAYER"
+        );
+
+    }
+
 }
 
 
 /* =====================================================
-   ATTACK
+   NORMAL ATTACK
 ===================================================== */
 
 function attack() {
@@ -632,7 +872,7 @@ function attack() {
 
 
 /* =====================================================
-   INPUT
+   KEYBOARD
 ===================================================== */
 
 input.onDirection(
@@ -669,7 +909,7 @@ input.onAttack(
 
 
 /* =====================================================
-   UPDATE
+   BATTLE UI
 ===================================================== */
 
 function updateBattleUI() {
@@ -677,11 +917,6 @@ function updateBattleUI() {
     const now =
         performance.now();
 
-
-    /*
-     * 更新しすぎない。
-     * スマホ負荷を抑える。
-     */
 
     if (
         now - lastUIUpdate <
@@ -755,7 +990,9 @@ function updateBattleUI() {
         );
 
 
-    if (playerBar) {
+    if (
+        playerBar
+    ) {
 
         playerBar.style.width =
             `${Math.max(
@@ -768,7 +1005,9 @@ function updateBattleUI() {
     }
 
 
-    if (enemyBar) {
+    if (
+        enemyBar
+    ) {
 
         enemyBar.style.width =
             `${Math.max(
@@ -781,9 +1020,13 @@ function updateBattleUI() {
     }
 
 
+    /*
+     * ターン表示はリアルタイムなので消す。
+     */
+
     setText(
         "turn-number",
-        "REALTIME"
+        ""
     );
 
 
@@ -816,6 +1059,10 @@ function showResult(
 
     battleStarted =
         false;
+
+
+    selectedChipId =
+        null;
 
 
     const title =
@@ -876,7 +1123,9 @@ function setText(
         );
 
 
-    if (element) {
+    if (
+        element
+    ) {
 
         element.textContent =
             value;
@@ -902,7 +1151,9 @@ function setMessage(
         );
 
 
-    if (log) {
+    if (
+        log
+    ) {
 
         log.textContent =
             message;
@@ -910,7 +1161,9 @@ function setMessage(
     }
 
 
-    if (action) {
+    if (
+        action
+    ) {
 
         action.textContent =
             message;
@@ -930,7 +1183,9 @@ const startButton =
     );
 
 
-if (startButton) {
+if (
+    startButton
+) {
 
     startButton.addEventListener(
         "click",
@@ -954,13 +1209,21 @@ const backButton =
     );
 
 
-if (backButton) {
+if (
+    backButton
+) {
 
     backButton.addEventListener(
         "click",
         () => {
 
             game.realtime.stop();
+
+            battleStarted =
+                false;
+
+            selectedChipId =
+                null;
 
             showScreen(
                 "title"
@@ -972,29 +1235,15 @@ if (backButton) {
 }
 
 
-const attackButton =
-    document.getElementById(
-        "attack-button"
-    );
-
-
-if (attackButton) {
-
-    attackButton.addEventListener(
-        "click",
-        attack
-    );
-
-}
-
-
 const restartButton =
     document.getElementById(
         "restart-button"
     );
 
 
-if (restartButton) {
+if (
+    restartButton
+) {
 
     restartButton.addEventListener(
         "click",
@@ -1022,13 +1271,21 @@ const resultTitleButton =
     );
 
 
-if (resultTitleButton) {
+if (
+    resultTitleButton
+) {
 
     resultTitleButton.addEventListener(
         "click",
         () => {
 
             game.realtime.stop();
+
+            battleStarted =
+                false;
+
+            selectedChipId =
+                null;
 
             showScreen(
                 "title"
@@ -1053,15 +1310,23 @@ console.log(
 );
 
 console.log(
-    "Realtime Engine: ONLINE"
+    "================================"
 );
 
 console.log(
-    "Grid: 5x5"
+    "FIELD TAP = MOVE"
 );
 
 console.log(
-    "Input: KEYBOARD + TOUCH"
+    "CHIP TAP = SELECT"
+);
+
+console.log(
+    "ENEMY TAP = USE CHIP / ATTACK"
+);
+
+console.log(
+    "SPACE = NORMAL ATTACK"
 );
 
 console.log(
