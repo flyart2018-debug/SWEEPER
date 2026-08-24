@@ -1,32 +1,37 @@
 import { Game } from "./core/Game.js";
+import { InputManager } from "./realtime/InputManager.js";
+
+
+const game =
+    new Game();
+
+
+const input =
+    new InputManager();
+
+
+let selectedChipId =
+    null;
+
+
+let battleStarted =
+    false;
+
+
+let lastUIUpdate =
+    0;
 
 
 /* =====================================================
-   SWEEPER
-   Main Application Controller
-===================================================== */
-
-
-const game = new Game();
-
-
-let selectedChipId = null;
-
-let actionUsed = false;
-
-let attackPerformed = false;
-
-let battleLocked = false;
-
-
-/* =====================================================
-   DOM
+   SCREEN
 ===================================================== */
 
 const screens = {
 
     title:
-        document.getElementById("title-screen"),
+        document.getElementById(
+            "title-screen"
+        ),
 
     characterSelect:
         document.getElementById(
@@ -46,50 +51,32 @@ const screens = {
 };
 
 
-const battleField =
-    document.getElementById(
-        "battle-field"
-    );
-
-
-const characterList =
-    document.getElementById(
-        "character-list"
-    );
-
-
-const battleLog =
-    document.getElementById(
-        "battle-log"
-    );
-
-
-const actionMessage =
-    document.getElementById(
-        "action-message"
-    );
-
-
-/* =====================================================
-   SCREEN
-===================================================== */
-
 function showScreen(name) {
 
-    Object.values(screens).forEach(
-        screen => {
+    Object.values(screens)
+        .forEach(screen => {
 
-            screen.classList.remove(
+            if (screen) {
+
+                screen.classList.remove(
+                    "active"
+                );
+
+            }
+
+        });
+
+
+    if (
+        screens[name]
+    ) {
+
+        screens[name]
+            .classList.add(
                 "active"
             );
 
-        }
-    );
-
-
-    screens[name].classList.add(
-        "active"
-    );
+    }
 
 }
 
@@ -100,7 +87,20 @@ function showScreen(name) {
 
 function renderCharacterSelect() {
 
-    characterList.innerHTML = "";
+    const list =
+        document.getElementById(
+            "character-list"
+        );
+
+
+    if (!list) {
+
+        return;
+
+    }
+
+
+    list.innerHTML = "";
 
 
     const characters = [
@@ -108,10 +108,9 @@ function renderCharacterSelect() {
         {
             id: "REN",
             name: "レン・クロス",
-            type: "バランス型",
-            color: "#2d7cff",
-            weapon: "ブレード",
-            ability: "オーバードライブ",
+            type: "BALANCE",
+            weapon: "BLADE",
+            ability: "OVERDRIVE",
             description:
                 "攻撃・防御・移動を平均的に扱えるオールラウンダー。"
         },
@@ -119,10 +118,9 @@ function renderCharacterSelect() {
         {
             id: "KAI",
             name: "カイ・ヴェルド",
-            type: "スピード型",
-            color: "#7dff45",
-            weapon: "ナイフ",
-            ability: "ステップ",
+            type: "SPEED",
+            weapon: "KNIFE",
+            ability: "STEP",
             description:
                 "高い機動力で攻撃と離脱を繰り返す高速型。"
         }
@@ -130,78 +128,69 @@ function renderCharacterSelect() {
     ];
 
 
-    characters.forEach(
-        character => {
+    characters.forEach(character => {
 
-            const card =
-                document.createElement(
-                    "article"
+        const card =
+            document.createElement(
+                "article"
+            );
+
+
+        card.className =
+            `character-card ${character.id.toLowerCase()}`;
+
+
+        card.innerHTML = `
+
+            <h3>
+                ${character.name}
+            </h3>
+
+            <div>
+                ${character.type}
+            </div>
+
+            <p>
+                WEAPON:
+                ${character.weapon}
+            </p>
+
+            <p>
+                ABILITY:
+                ${character.ability}
+            </p>
+
+            <p>
+                ${character.description}
+            </p>
+
+            <button
+                type="button"
+                class="character-select-button"
+            >
+                SELECT
+            </button>
+
+        `;
+
+
+        card.addEventListener(
+            "click",
+            () => {
+
+                startBattle(
+                    character.id
                 );
 
-
-            card.className =
-                "character-card " +
-                character.id.toLowerCase();
+            }
+        );
 
 
-            card.innerHTML = `
+        list.appendChild(
+            card
+        );
 
-                <div class="character-color"></div>
-
-                <h3 class="character-name">
-                    ${character.name}
-                </h3>
-
-                <div class="character-type">
-                    ${character.type}
-                </div>
-
-                <div class="character-description">
-
-                    <strong>WEAPON</strong>
-                    <br>
-                    ${character.weapon}
-
-                    <br><br>
-
-                    <strong>ABILITY</strong>
-                    <br>
-                    ${character.ability}
-
-                    <br><br>
-
-                    ${character.description}
-
-                </div>
-
-                <button
-                    class="character-select-button"
-                    type="button"
-                >
-                    SELECT
-                </button>
-
-            `;
-
-
-            card.addEventListener(
-                "click",
-                () => {
-
-                    startBattle(
-                        character.id
-                    );
-
-                }
-            );
-
-
-            characterList.appendChild(
-                card
-            );
-
-        }
-    );
+    });
 
 }
 
@@ -222,14 +211,9 @@ function startBattle(
     selectedChipId =
         null;
 
-    actionUsed =
-        false;
 
-    attackPerformed =
-        false;
-
-    battleLocked =
-        false;
+    battleStarted =
+        true;
 
 
     showScreen(
@@ -240,23 +224,33 @@ function startBattle(
     updateBattleUI();
 
 
-    battleLog.textContent =
-        `${game.state.player.shortName} ONLINE // BATTLEFIELD READY`;
-
-
-    actionMessage.textContent =
-        "YOUR TURN";
+    setMessage(
+        "REALTIME BATTLE // ONLINE"
+    );
 
 }
 
 
 /* =====================================================
-   BATTLE FIELD
+   FIELD
 ===================================================== */
 
 function renderBattleField() {
 
-    battleField.innerHTML = "";
+    const field =
+        document.getElementById(
+            "battle-field"
+        );
+
+
+    if (!field) {
+
+        return;
+
+    }
+
+
+    field.innerHTML = "";
 
 
     const state =
@@ -314,40 +308,31 @@ function renderBattleField() {
             }
 
 
-            cell.dataset.row =
-                row;
-
-            cell.dataset.col =
-                col;
-
-
             /*
              * PLAYER
              */
 
             if (
-                row ===
-                    state.playerPosition.row &&
-                col ===
-                    state.playerPosition.col
+                state.playerPosition.row === row &&
+                state.playerPosition.col === col
             ) {
 
-                const unit =
+                const player =
                     document.createElement(
                         "div"
                     );
 
 
-                unit.className =
+                player.className =
                     "unit player";
 
 
-                unit.textContent =
+                player.textContent =
                     state.player.shortName;
 
 
                 cell.appendChild(
-                    unit
+                    player
                 );
 
             }
@@ -358,47 +343,60 @@ function renderBattleField() {
              */
 
             if (
-                row ===
-                    state.enemyPosition.row &&
-                col ===
-                    state.enemyPosition.col
+                state.enemyPosition.row === row &&
+                state.enemyPosition.col === col
             ) {
 
-                const unit =
+                const enemy =
                     document.createElement(
                         "div"
                     );
 
 
-                unit.className =
+                enemy.className =
                     "unit enemy";
 
 
-                unit.textContent =
+                enemy.textContent =
                     "CPU";
 
 
                 cell.appendChild(
-                    unit
+                    enemy
                 );
 
             }
 
 
+            /*
+             * タップ移動
+             */
+
             cell.addEventListener(
                 "click",
                 () => {
 
-                    handleCellClick(
+                    if (
+                        !battleStarted
+                    ) {
+
+                        return;
+
+                    }
+
+
+                    game.movePlayer(
                         row,
                         col
                     );
+
+                    updateBattleUI();
 
                 }
             );
 
 
-            battleField.appendChild(
+            field.appendChild(
                 cell
             );
 
@@ -410,159 +408,7 @@ function renderBattleField() {
 
 
 /* =====================================================
-   FIELD CLICK
-===================================================== */
-
-function handleCellClick(
-    row,
-    col
-) {
-
-    if (
-        battleLocked
-    ) {
-
-        return;
-
-    }
-
-
-    if (
-        game.state.gameOver
-    ) {
-
-        return;
-
-    }
-
-
-    /*
-     * If an action has already been used,
-     * movement is locked.
-     */
-
-    if (
-        actionUsed
-    ) {
-
-        actionMessage.textContent =
-            "ACTION ALREADY USED";
-
-        return;
-
-    }
-
-
-    const result =
-        game.movePlayer(
-            row,
-            col
-        );
-
-
-    if (
-        !result.success
-    ) {
-
-        actionMessage.textContent =
-            "MOVE 1 CELL ONLY";
-
-        return;
-
-    }
-
-
-    actionUsed =
-        true;
-
-
-    battleLog.textContent =
-        "PLAYER MOVED";
-
-
-    actionMessage.textContent =
-        "ACTION COMPLETE";
-
-
-    updateBattleUI();
-
-
-    executeEnemyTurn();
-
-}
-
-
-/* =====================================================
-   ATTACK
-===================================================== */
-
-function handleAttack() {
-
-    if (
-        battleLocked ||
-        actionUsed
-    ) {
-
-        return;
-
-    }
-
-
-    const result =
-        game.playerAttack();
-
-
-    if (
-        !result.success
-    ) {
-
-        actionMessage.textContent =
-            "TARGET OUT OF RANGE";
-
-        return;
-
-    }
-
-
-    actionUsed =
-        true;
-
-
-    attackPerformed =
-        true;
-
-
-    battleLog.textContent =
-        `PLAYER ATTACK // -${result.damage} HP`;
-
-
-    actionMessage.textContent =
-        `HIT ${result.damage}`;
-
-
-    updateBattleUI();
-
-
-    if (
-        result.gameOver
-    ) {
-
-        showResult(
-            true
-        );
-
-        return;
-
-    }
-
-
-    executeEnemyTurn();
-
-}
-
-
-/* =====================================================
-   CHIP LIST
+   CHIP UI
 ===================================================== */
 
 function renderChips() {
@@ -573,19 +419,20 @@ function renderChips() {
         );
 
 
+    if (!container) {
+
+        return;
+
+    }
+
+
     container.innerHTML = "";
 
 
-    const chips =
-        game.getAllChips();
+    game.getAllChips()
+        .forEach(chip => {
 
-
-    chips.forEach(
-        chip => {
-
-            if (
-                !chip
-            ) {
+            if (!chip) {
 
                 return;
 
@@ -635,8 +482,8 @@ function renderChips() {
                 "click",
                 () => {
 
-                    handleChip(
-                        chip
+                    useChip(
+                        chip.id
                     );
 
                 }
@@ -647,8 +494,7 @@ function renderChips() {
                 button
             );
 
-        }
-    );
+        });
 
 }
 
@@ -657,207 +503,13 @@ function renderChips() {
    CHIP
 ===================================================== */
 
-function handleChip(
-    chip
+function useChip(
+    chipId
 ) {
 
     if (
-        battleLocked ||
-        game.state.gameOver
+        !battleStarted
     ) {
-
-        return;
-
-    }
-
-
-    /*
-     * Modifier chips can be used before
-     * the main attack.
-     */
-
-    if (
-        chip.id ===
-            "OVER_BLADE"
-    ) {
-
-        if (
-            game.state.player.id !==
-            "REN"
-        ) {
-
-            return;
-
-        }
-
-
-        const result =
-            game.useChip(
-                chip.id
-            );
-
-
-        if (
-            !result.success
-        ) {
-
-            return;
-
-        }
-
-
-        selectedChipId =
-            chip.id;
-
-
-        actionMessage.textContent =
-            "OVERBLADE READY";
-
-
-        battleLog.textContent =
-            "NEXT ATTACK POWER +50";
-
-
-        renderChips();
-
-        return;
-
-    }
-
-
-    if (
-        chip.id ===
-            "ACCEL_STEP"
-    ) {
-
-        if (
-            game.state.player.id !==
-            "KAI"
-        ) {
-
-            return;
-
-        }
-
-
-        const result =
-            game.useChip(
-                chip.id
-            );
-
-
-        if (
-            !result.success
-        ) {
-
-            actionMessage.textContent =
-                "CANNOT USE HERE";
-
-            return;
-
-        }
-
-
-        selectedChipId =
-            chip.id;
-
-
-        actionMessage.textContent =
-            "ACCEL STEP // ATTACK +10";
-
-
-        battleLog.textContent =
-            "KAI POSITION SHIFTED";
-
-
-        updateBattleUI();
-
-        renderChips();
-
-        return;
-
-    }
-
-
-    /*
-     * DASH can be used after attack,
-     * according to the prototype specification.
-     */
-
-    if (
-        chip.id === "DASH"
-    ) {
-
-        if (
-            !attackPerformed &&
-            actionUsed
-        ) {
-
-            actionMessage.textContent =
-                "DASH UNAVAILABLE";
-
-            return;
-
-        }
-
-
-        const result =
-            game.useChip(
-                chip.id
-            );
-
-
-        if (
-            !result.success
-        ) {
-
-            actionMessage.textContent =
-                "CANNOT DASH";
-
-            return;
-
-        }
-
-
-        actionUsed =
-            true;
-
-
-        battleLog.textContent =
-            "DASH // MOVED 2 CELLS";
-
-
-        actionMessage.textContent =
-            "DASH COMPLETE";
-
-
-        updateBattleUI();
-
-
-        if (
-            attackPerformed
-        ) {
-
-            executeEnemyTurn();
-
-        }
-
-
-        return;
-
-    }
-
-
-    /*
-     * Other chips consume the action.
-     */
-
-    if (
-        actionUsed
-    ) {
-
-        actionMessage.textContent =
-            "ACTION ALREADY USED";
 
         return;
 
@@ -866,7 +518,7 @@ function handleChip(
 
     const result =
         game.useChip(
-            chip.id
+            chipId
         );
 
 
@@ -874,81 +526,9 @@ function handleChip(
         !result.success
     ) {
 
-        actionMessage.textContent =
-            "CHIP CANNOT BE USED";
-
-        return;
-
-    }
-
-
-    actionUsed =
-        true;
-
-
-    selectedChipId =
-        chip.id;
-
-
-    if (
-        chip.id ===
-        "SWORD"
-    ) {
-
-        battleLog.textContent =
-            "SWORD // " +
-            `-${result.damage} HP`;
-
-    }
-
-
-    else if (
-        chip.id ===
-        "SHOT"
-    ) {
-
-        battleLog.textContent =
-            "SHOT // " +
-            `-${result.damage} HP`;
-
-    }
-
-
-    else if (
-        chip.id ===
-        "SHIELD"
-    ) {
-
-        battleLog.textContent =
-            "SHIELD // DAMAGE -50%";
-
-    }
-
-
-    else if (
-        chip.id ===
-        "RECOVER"
-    ) {
-
-        battleLog.textContent =
-            `RECOVER // +${result.recovered} HP`;
-
-    }
-
-
-    actionMessage.textContent =
-        "CHIP ACTION COMPLETE";
-
-
-    updateBattleUI();
-
-
-    if (
-        game.state.gameOver
-    ) {
-
-        showResult(
-            true
+        setMessage(
+            result.reason ||
+            "CHIP UNAVAILABLE"
         );
 
         return;
@@ -956,42 +536,82 @@ function handleChip(
     }
 
 
-    executeEnemyTurn();
+    selectedChipId =
+        chipId;
+
+
+    if (
+        result.hit
+    ) {
+
+        setMessage(
+            `CHIP HIT // -${result.damage}`
+        );
+
+    }
+    else {
+
+        setMessage(
+            `CHIP // ${chipId}`
+        );
+
+    }
+
+
+    updateBattleUI();
 
 }
 
 
 /* =====================================================
-   ENEMY TURN
+   ATTACK
 ===================================================== */
 
-async function executeEnemyTurn() {
+function attack() {
 
     if (
-        battleLocked ||
-        game.state.gameOver
+        !battleStarted
     ) {
 
         return;
 
     }
-
-
-    battleLocked =
-        true;
-
-
-    actionMessage.textContent =
-        "ENEMY TURN";
-
-
-    await wait(
-        450
-    );
 
 
     const result =
-        await game.executeEnemyTurn();
+        game.playerAttack();
+
+
+    if (
+        !result.success
+    ) {
+
+        setMessage(
+            result.reason ||
+            "ATTACK UNAVAILABLE"
+        );
+
+        return;
+
+    }
+
+
+    if (
+        result.hit
+    ) {
+
+        setMessage(
+            `HIT // -${result.damage}`
+        );
+
+    }
+    else {
+
+        setMessage(
+            "ATTACK MISS"
+        );
+
+    }
 
 
     updateBattleUI();
@@ -1002,55 +622,88 @@ async function executeEnemyTurn() {
     ) {
 
         showResult(
-            false
+            game.state.winner ===
+            "PLAYER"
         );
+
+    }
+
+}
+
+
+/* =====================================================
+   INPUT
+===================================================== */
+
+input.onDirection(
+    direction => {
+
+        if (
+            !battleStarted
+        ) {
+
+            return;
+
+        }
+
+
+        game.realtime
+            .movePlayer(
+                direction
+            );
+
+
+        updateBattleUI();
+
+    }
+);
+
+
+input.onAttack(
+    () => {
+
+        attack();
+
+    }
+);
+
+
+/* =====================================================
+   UPDATE
+===================================================== */
+
+function updateBattleUI() {
+
+    const now =
+        performance.now();
+
+
+    /*
+     * 更新しすぎない。
+     * スマホ負荷を抑える。
+     */
+
+    if (
+        now - lastUIUpdate <
+        45
+    ) {
 
         return;
 
     }
 
 
-    actionUsed =
-        false;
+    lastUIUpdate =
+        now;
 
-
-    attackPerformed =
-        false;
-
-
-    selectedChipId =
-        null;
-
-
-    battleLocked =
-        false;
-
-
-    renderChips();
-
-
-    actionMessage.textContent =
-        "YOUR TURN";
-
-
-    battleLog.textContent =
-        `TURN ${game.state.turn} // READY`;
-
-}
-
-
-/* =====================================================
-   UI UPDATE
-===================================================== */
-
-function updateBattleUI() {
 
     const state =
         game.state;
 
 
     if (
-        !state.player
+        !state.player ||
+        !state.enemy
     ) {
 
         return;
@@ -1066,61 +719,89 @@ function updateBattleUI() {
         state.enemy;
 
 
-    document.getElementById(
-        "player-name"
-    ).textContent =
-        player.shortName;
+    setText(
+        "player-name",
+        player.shortName
+    );
 
 
-    document.getElementById(
-        "enemy-name"
-    ).textContent =
-        enemy.shortName;
+    setText(
+        "enemy-name",
+        enemy.shortName
+    );
 
 
-    document.getElementById(
-        "player-hp"
-    ).textContent =
-        `${player.hp} / ${player.maxHp}`;
+    setText(
+        "player-hp",
+        `${player.hp} / ${player.maxHp}`
+    );
 
 
-    document.getElementById(
-        "enemy-hp"
-    ).textContent =
-        `${enemy.hp} / ${enemy.maxHp}`;
+    setText(
+        "enemy-hp",
+        `${enemy.hp} / ${enemy.maxHp}`
+    );
 
 
-    document.getElementById(
-        "player-hp-bar"
-    ).style.width =
-        `${Math.max(
-            0,
-            player.hp /
-            player.maxHp *
-            100
-        )}%`;
+    const playerBar =
+        document.getElementById(
+            "player-hp-bar"
+        );
 
 
-    document.getElementById(
-        "enemy-hp-bar"
-    ).style.width =
-        `${Math.max(
-            0,
-            enemy.hp /
-            enemy.maxHp *
-            100
-        )}%`;
+    const enemyBar =
+        document.getElementById(
+            "enemy-hp-bar"
+        );
 
 
-    document.getElementById(
-        "turn-number"
-    ).textContent =
-        state.turn;
+    if (playerBar) {
+
+        playerBar.style.width =
+            `${Math.max(
+                0,
+                player.hp /
+                player.maxHp *
+                100
+            )}%`;
+
+    }
+
+
+    if (enemyBar) {
+
+        enemyBar.style.width =
+            `${Math.max(
+                0,
+                enemy.hp /
+                enemy.maxHp *
+                100
+            )}%`;
+
+    }
+
+
+    setText(
+        "turn-number",
+        "REALTIME"
+    );
 
 
     renderBattleField();
 
     renderChips();
+
+
+    if (
+        state.gameOver
+    ) {
+
+        showResult(
+            state.winner ===
+            "PLAYER"
+        );
+
+    }
 
 }
 
@@ -1133,8 +814,8 @@ function showResult(
     playerWon
 ) {
 
-    battleLocked =
-        true;
+    battleStarted =
+        false;
 
 
     const title =
@@ -1150,25 +831,25 @@ function showResult(
 
 
     if (
-        playerWon
+        title
     ) {
 
         title.textContent =
-            "VICTORY";
-
-
-        message.textContent =
-            "TARGET NEUTRALIZED.";
+            playerWon
+                ? "VICTORY"
+                : "DEFEAT";
 
     }
-    else {
 
-        title.textContent =
-            "DEFEAT";
 
+    if (
+        message
+    ) {
 
         message.textContent =
-            "SWEEPER SYSTEM OFFLINE.";
+            playerWon
+                ? "TARGET NEUTRALIZED."
+                : "SWEEPER SYSTEM OFFLINE.";
 
     }
 
@@ -1181,23 +862,60 @@ function showResult(
 
 
 /* =====================================================
-   WAIT
+   HELPERS
 ===================================================== */
 
-function wait(
-    milliseconds
+function setText(
+    id,
+    value
 ) {
 
-    return new Promise(
-        resolve => {
+    const element =
+        document.getElementById(
+            id
+        );
 
-            setTimeout(
-                resolve,
-                milliseconds
-            );
 
-        }
-    );
+    if (element) {
+
+        element.textContent =
+            value;
+
+    }
+
+}
+
+
+function setMessage(
+    message
+) {
+
+    const log =
+        document.getElementById(
+            "battle-log"
+        );
+
+
+    const action =
+        document.getElementById(
+            "action-message"
+        );
+
+
+    if (log) {
+
+        log.textContent =
+            message;
+
+    }
+
+
+    if (action) {
+
+        action.textContent =
+            message;
+
+    }
 
 }
 
@@ -1206,11 +924,15 @@ function wait(
    BUTTONS
 ===================================================== */
 
-document
-    .getElementById(
+const startButton =
+    document.getElementById(
         "start-button"
-    )
-    .addEventListener(
+    );
+
+
+if (startButton) {
+
+    startButton.addEventListener(
         "click",
         () => {
 
@@ -1223,14 +945,22 @@ document
         }
     );
 
+}
 
-document
-    .getElementById(
+
+const backButton =
+    document.getElementById(
         "back-to-title-button"
-    )
-    .addEventListener(
+    );
+
+
+if (backButton) {
+
+    backButton.addEventListener(
         "click",
         () => {
+
+            game.realtime.stop();
 
             showScreen(
                 "title"
@@ -1239,46 +969,34 @@ document
         }
     );
 
+}
 
-document
-    .getElementById(
+
+const attackButton =
+    document.getElementById(
         "attack-button"
-    )
-    .addEventListener(
-        "click",
-        handleAttack
     );
 
 
-document
-    .getElementById(
-        "end-turn-button"
-    )
-    .addEventListener(
+if (attackButton) {
+
+    attackButton.addEventListener(
         "click",
-        () => {
-
-            if (
-                battleLocked ||
-                actionUsed
-            ) {
-
-                return;
-
-            }
-
-
-            executeEnemyTurn();
-
-        }
+        attack
     );
 
+}
 
-document
-    .getElementById(
+
+const restartButton =
+    document.getElementById(
         "restart-button"
-    )
-    .addEventListener(
+    );
+
+
+if (restartButton) {
+
+    restartButton.addEventListener(
         "click",
         () => {
 
@@ -1295,14 +1013,22 @@ document
         }
     );
 
+}
 
-document
-    .getElementById(
+
+const resultTitleButton =
+    document.getElementById(
         "result-title-button"
-    )
-    .addEventListener(
+    );
+
+
+if (resultTitleButton) {
+
+    resultTitleButton.addEventListener(
         "click",
         () => {
+
+            game.realtime.stop();
 
             showScreen(
                 "title"
@@ -1311,35 +1037,33 @@ document
         }
     );
 
+}
+
 
 /* =====================================================
    BOOT
 ===================================================== */
 
 console.log(
-    "================================="
+    "================================"
 );
 
 console.log(
-    "SWEEPER // ONLINE"
+    "SWEEPER REALTIME BATTLE"
 );
 
 console.log(
-    "Battle Engine: READY"
+    "Realtime Engine: ONLINE"
 );
 
 console.log(
-    "Character System: READY"
+    "Grid: 5x5"
 );
 
 console.log(
-    "Chip System: READY"
+    "Input: KEYBOARD + TOUCH"
 );
 
 console.log(
-    "Enemy AI: READY"
-);
-
-console.log(
-    "================================="
+    "================================"
 );
