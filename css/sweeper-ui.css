@@ -1,0 +1,303 @@
+/* =========================================
+   SWEEPER UI ENHANCEMENT
+   Phase 1
+========================================= */
+
+:root {
+    --s-cyan: #00eaff;
+    --s-blue: #2d7cff;
+    --s-green: #7dff45;
+    --s-red: #ff4264;
+    --s-white: #f4fbff;
+}
+
+/* ================================
+   GLOBAL TOUCH
+================================ */
+
+button,
+.battle-cell,
+.character-card {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
+/* ================================
+   TITLE ENHANCEMENT
+================================ */
+
+.game-title {
+    position: relative;
+    text-transform: uppercase;
+    animation: sweeperTitlePulse 3s ease-in-out infinite;
+}
+
+.title-frame {
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+/* ================================
+   CHARACTER CARDS
+================================ */
+
+.character-card {
+    overflow: hidden;
+}
+
+.character-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+
+    background:
+        linear-gradient(
+            120deg,
+            transparent 0%,
+            rgba(255,255,255,0.04) 45%,
+            transparent 60%
+        );
+
+    transform: translateX(-100%);
+    transition: transform 0.45s ease;
+}
+
+.character-card:hover::before {
+    transform: translateX(100%);
+}
+
+.character-card.ren {
+    box-shadow:
+        inset 0 0 35px rgba(45,124,255,0.05);
+}
+
+.character-card.kai {
+    box-shadow:
+        inset 0 0 35px rgba(125,255,69,0.05);
+}
+
+/* ================================
+   BATTLE FIELD
+================================ */
+
+.battle-field {
+    isolation: isolate;
+}
+
+.battle-cell {
+    transition:
+        background 0.12s ease,
+        box-shadow 0.12s ease,
+        transform 0.08s ease;
+}
+
+.battle-cell:hover {
+    background:
+        rgba(0,234,255,0.08);
+
+    box-shadow:
+        inset 0 0 18px rgba(0,234,255,0.08);
+}
+
+.battle-cell:active {
+    transform: scale(0.96);
+}
+
+/* ================================
+   PLAYER / ENEMY UNIT
+================================ */
+
+.unit {
+    position: relative;
+
+    min-width: 58%;
+    min-height: 58%;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-weight: 900;
+    letter-spacing: 0.08em;
+
+    border: 2px solid currentColor;
+
+    background:
+        rgba(4,10,20,0.92);
+
+    box-shadow:
+        0 0 18px currentColor,
+        inset 0 0 14px currentColor;
+
+    animation:
+        sweeperUnitIdle 1.6s ease-in-out infinite;
+}
+
+.unit.player {
+    color: var(--s-blue);
+}
+
+.unit.enemy {
+    color: var(--s-red);
+}
+
+/* ================================
+   CHIP BUTTON
+================================ */
+
+.chip-button {
+    position: relative;
+
+    overflow: hidden;
+
+    min-height: 62px;
+
+    border:
+        1px solid rgba(0,234,255,0.25);
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(9,22,40,0.98),
+            rgba(3,9,18,0.98)
+        );
+
+    color: var(--s-white);
+
+    transition:
+        transform 0.12s ease,
+        border-color 0.12s ease,
+        box-shadow 0.12s ease;
+}
+
+.chip-button:hover {
+    transform: translateY(-2px);
+
+    border-color:
+        var(--s-cyan);
+
+    box-shadow:
+        0 0 18px rgba(0,234,255,0.18);
+}
+
+.chip-button:active {
+    transform: scale(0.96);
+}
+
+.chip-button.selected {
+    border-color:
+        var(--s-cyan);
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(0,234,255,0.16),
+            rgba(3,15,28,0.98)
+        );
+
+    box-shadow:
+        0 0 22px rgba(0,234,255,0.3),
+        inset 0 0 18px rgba(0,234,255,0.08);
+}
+
+/* ================================
+   HP DAMAGE FEEL
+================================ */
+
+.hp-fill {
+    transition:
+        width 0.25s ease,
+        filter 0.12s ease;
+}
+
+.hp-fill.player {
+    box-shadow:
+        0 0 12px rgba(0,234,255,0.7),
+        0 0 28px rgba(0,234,255,0.2);
+}
+
+.hp-fill.enemy {
+    box-shadow:
+        0 0 12px rgba(255,55,95,0.7),
+        0 0 28px rgba(255,55,95,0.2);
+}
+
+/* ================================
+   ACTION MESSAGE
+================================ */
+
+.action-message {
+    min-height: 26px;
+
+    text-transform: uppercase;
+
+    letter-spacing: 0.16em;
+
+    text-shadow:
+        0 0 8px rgba(0,234,255,0.5);
+}
+
+/* ================================
+   ANIMATIONS
+================================ */
+
+@keyframes sweeperTitlePulse {
+
+    0%,
+    100% {
+        text-shadow:
+            0 0 10px rgba(0,234,255,0.7),
+            0 0 40px rgba(0,234,255,0.25);
+    }
+
+    50% {
+        text-shadow:
+            0 0 16px rgba(0,234,255,0.9),
+            0 0 60px rgba(0,234,255,0.35);
+    }
+}
+
+@keyframes sweeperUnitIdle {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-2px);
+    }
+}
+
+/* ================================
+   MOBILE
+================================ */
+
+@media (max-width: 700px) {
+
+    .character-list {
+        grid-template-columns: 1fr;
+        width: min(430px, 94vw);
+        overflow-y: auto;
+    }
+
+    .character-card {
+        min-height: 230px;
+    }
+
+    .battle-field {
+        width:
+            min(86vw, 52vh);
+    }
+
+    .chip-list {
+        grid-template-columns:
+            repeat(2, 1fr);
+    }
+
+    .chip-button {
+        min-height: 56px;
+    }
+
+}
