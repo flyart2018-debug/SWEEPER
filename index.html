@@ -1,1 +1,307 @@
-　
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    >
+
+    <meta
+        name="theme-color"
+        content="#050914"
+    >
+
+    <title>SWEEPER</title>
+
+    <link rel="stylesheet" href="./css/style.css">
+</head>
+
+<body>
+
+    <div id="app">
+
+        <!-- =========================================
+             TITLE SCREEN
+        ========================================== -->
+        <section
+            id="title-screen"
+            class="screen active"
+        >
+
+            <div class="title-frame">
+
+                <div class="title-kicker">
+                    CYBER BATTLE SYSTEM
+                </div>
+
+                <h1 class="game-title">
+                    SWEEPER
+                </h1>
+
+                <div class="title-line"></div>
+
+                <p class="title-subtitle">
+                    NETWORK CLEANUP PROTOCOL
+                </p>
+
+                <button
+                    id="start-button"
+                    class="cyber-button primary"
+                >
+                    NEW GAME
+                </button>
+
+            </div>
+
+            <div class="version">
+                ALPHA PROTOTYPE // WEB
+            </div>
+
+        </section>
+
+
+        <!-- =========================================
+             CHARACTER SELECT
+        ========================================== -->
+        <section
+            id="character-select-screen"
+            class="screen"
+        >
+
+            <header class="screen-header">
+
+                <div class="header-kicker">
+                    SWEEPER / BATTLE SYSTEM
+                </div>
+
+                <h2>
+                    SELECT SWEEPER
+                </h2>
+
+            </header>
+
+
+            <div
+                id="character-list"
+                class="character-list"
+            >
+
+                <!-- JavaScriptで生成 -->
+
+            </div>
+
+
+            <button
+                id="back-to-title-button"
+                class="cyber-button secondary"
+            >
+                BACK
+            </button>
+
+        </section>
+
+
+        <!-- =========================================
+             BATTLE SCREEN
+        ========================================== -->
+        <section
+            id="battle-screen"
+            class="screen"
+        >
+
+            <header class="battle-header">
+
+                <div class="fighter-info">
+
+                    <span
+                        id="player-name"
+                        class="fighter-name"
+                    >
+                        REN
+                    </span>
+
+                    <div class="hp-container">
+
+                        <div class="hp-label">
+                            HP
+                        </div>
+
+                        <div class="hp-bar">
+                            <div
+                                id="player-hp-bar"
+                                class="hp-fill player"
+                            ></div>
+                        </div>
+
+                        <span id="player-hp">
+                            100 / 100
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <div class="turn-display">
+
+                    <span class="turn-label">
+                        TURN
+                    </span>
+
+                    <span id="turn-number">
+                        1
+                    </span>
+
+                </div>
+
+
+                <div class="fighter-info enemy-info">
+
+                    <span
+                        id="enemy-name"
+                        class="fighter-name"
+                    >
+                        TRAINING UNIT
+                    </span>
+
+                    <div class="hp-container">
+
+                        <div class="hp-bar">
+                            <div
+                                id="enemy-hp-bar"
+                                class="hp-fill enemy"
+                            ></div>
+                        </div>
+
+                        <span id="enemy-hp">
+                            100 / 100
+                        </span>
+
+                        <div class="hp-label">
+                            HP
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </header>
+
+
+            <main class="battle-main">
+
+                <div
+                    id="battle-log"
+                    class="battle-log"
+                >
+                    BATTLEFIELD INITIALIZED
+                </div>
+
+
+                <div
+                    id="battle-field"
+                    class="battle-field"
+                >
+                    <!-- JavaScriptで5×5を生成 -->
+                </div>
+
+
+                <div
+                    id="action-message"
+                    class="action-message"
+                >
+                    SELECT ACTION
+                </div>
+
+            </main>
+
+
+            <footer class="battle-controls">
+
+                <div
+                    id="chip-list"
+                    class="chip-list"
+                >
+                    <!-- JavaScriptで生成 -->
+                </div>
+
+
+                <div class="battle-actions">
+
+                    <button
+                        id="attack-button"
+                        class="cyber-button attack"
+                    >
+                        ATTACK
+                    </button>
+
+                    <button
+                        id="end-turn-button"
+                        class="cyber-button primary"
+                    >
+                        END TURN
+                    </button>
+
+                </div>
+
+            </footer>
+
+        </section>
+
+
+        <!-- =========================================
+             RESULT SCREEN
+        ========================================== -->
+        <section
+            id="result-screen"
+            class="screen"
+        >
+
+            <div class="result-frame">
+
+                <div
+                    id="result-kicker"
+                    class="title-kicker"
+                >
+                    BATTLE RESULT
+                </div>
+
+                <h2 id="result-title">
+                    VICTORY
+                </h2>
+
+                <p id="result-message">
+                    TARGET NEUTRALIZED.
+                </p>
+
+                <button
+                    id="restart-button"
+                    class="cyber-button primary"
+                >
+                    REMATCH
+                </button>
+
+                <button
+                    id="result-title-button"
+                    class="cyber-button secondary"
+                >
+                    TITLE
+
+                </button>
+
+            </div>
+
+        </section>
+
+    </div>
+
+
+    <script
+        type="module"
+        src="./src/main.js"
+    ></script>
+
+</body>
+</html>
